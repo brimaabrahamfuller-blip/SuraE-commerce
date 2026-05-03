@@ -1,90 +1,159 @@
-import { notFound } from 'next/navigation';
+import Link from 'next/link'
+import ProductCard from '@/components/ProductCard'
 
-export default function ProductPage({ params }: { params: { id: string } }) {
-  // Mock data - replace with Prisma fetch
-  const product = {
-    id: params.id,
-    name: 'Signature Gold Bag',
-    price: 450,
-    description: 'A timeless piece crafted with premium Liberian craftsmanship. Features genuine leather and custom gold-toned hardware that speaks volumes of your style.',
+const featuredProducts = [
+  {
+    id: 1,
+    name: 'Elegant Gold Clutch',
+    price: '89.99',
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&h=500&fit=crop',
     category: 'Bags',
-    stock: 5,
-    variants: [
-      { id: 'v1', size: 'Small', type: 'Leather', stock: 2 },
-      { id: 'v2', size: 'Large', type: 'Leather', stock: 3 },
-    ],
-  };
+    stock: 'In Stock' as const,
+  },
+  {
+    id: 2,
+    name: 'Silk Evening Dress',
+    price: '249.99',
+    image: 'https://images.unsplash.com/photo-1595777707802-41d339d60280?w=500&h=500&fit=crop',
+    category: 'Dresses',
+    stock: 'In Stock' as const,
+  },
+  {
+    id: 3,
+    name: 'Premium Blouse',
+    price: '129.99',
+    image: 'https://images.unsplash.com/photo-1551028719-00167b16ebc5?w=500&h=500&fit=crop',
+    category: 'Blouses',
+    stock: 'Low Stock' as const,
+  },
+  {
+    id: 4,
+    name: 'Luxury Perfume',
+    price: '159.99',
+    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=500&fit=crop',
+    category: 'Perfume',
+    stock: 'In Stock' as const,
+  },
+]
 
-  if (!product) notFound();
+const categories = [
+  { name: 'Bags', icon: '👜' },
+  { name: 'Dresses', icon: '👗' },
+  { name: 'Blouses', icon: '👔' },
+  { name: 'Shirts', icon: '👕' },
+  { name: 'Jeans', icon: '👖' },
+  { name: 'T-Shirts', icon: '🎽' },
+  { name: 'Perfume', icon: '💐' },
+]
 
-  const whatsappLink = `https://wa.me/231555109860?text=Hello, I am interested in the ${product.name} ($${product.price})`;
-
+export default function Home() {
   return (
-    <main className="pt-32 pb-20 max-w-7xl mx-auto px-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-        <div className="relative aspect-[4/5] bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100">
-          <span className="text-gray-300 font-serif italic uppercase tracking-widest text-sm">Product Image Gallery</span>
-          {product.stock === 0 && (
-            <div className="absolute top-0 right-0 bg-black text-gold px-6 py-2 uppercase tracking-widest text-xs">
-              Currently Unavailable
-            </div>
-          )}
+    <main className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Gradient */}
+        <div className="absolute inset-0 luxury-gradient opacity-90"></div>
+
+        {/* Content */}
+        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 tracking-tight">
+            Sura
+          </h1>
+          <p className="text-xl sm:text-2xl lg:text-3xl text-white font-light italic mb-8 tracking-wide">
+            Style that speaks for you.
+          </p>
+          <p className="text-lg text-gold mb-12 font-semibold tracking-widest">
+            LUXURY COLLECTION
+          </p>
+          <Link
+            href="/shop"
+            className="inline-block bg-gold text-luxuryBlack font-bold py-4 px-12 rounded-lg hover:bg-gold-dark transition-all duration-300 transform hover:scale-105 text-lg tracking-widest shadow-2xl"
+          >
+            SHOP NOW
+          </Link>
         </div>
 
-        <div className="flex flex-col">
-          <nav className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-6">
-            Shop / {product.category} / {product.name}
-          </nav>
-          
-          <h1 className="text-4xl font-serif mb-4 tracking-tight uppercase">{product.name}</h1>
-          <p className="text-2xl text-gold mb-10 font-medium tracking-widest">${product.price.toLocaleString()}</p>
-          
-          <div className="prose prose-sm mb-12 text-gray-600 leading-relaxed border-b border-gray-100 pb-8">
-            <p>{product.description}</p>
-          </div>
+        {/* Decorative Elements */}
+        <div className="absolute top-10 left-10 w-32 h-32 border-2 border-gold opacity-20 rounded-full"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 border-2 border-gold opacity-20 rounded-full"></div>
+      </section>
 
-          <div className="mb-10">
-            <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold mb-5">Select Size</h4>
-            <div className="flex flex-wrap gap-3">
-              {product.variants.map((v) => (
-                <button 
-                  key={v.id}
-                  disabled={v.stock === 0}
-                  className={`px-8 py-3 border text-xs uppercase tracking-widest transition-all ${
-                    v.stock === 0 
-                    ? 'border-gray-100 text-gray-300 cursor-not-allowed' 
-                    : 'border-gray-200 hover:border-gold'
-                  }`}
-                >
-                  {v.size} {v.stock === 0 && '(Sold Out)'}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Featured Categories */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-serif font-bold text-center text-luxuryBlack mb-4">
+            Explore Collections
+          </h2>
+          <div className="w-24 h-1 bg-gold mx-auto mb-12"></div>
 
-          <div className="flex flex-col gap-4">
-            <button 
-              disabled={product.stock === 0}
-              className={`w-full py-5 uppercase tracking-[0.4em] text-xs transition-all duration-500 ${
-                product.stock === 0 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-luxuryBlack text-gold hover:bg-gold hover:text-black border border-luxuryBlack'
-              }`}
-            >
-              {product.stock === 0 ? 'Restocking Soon' : 'Add to Collection'}
-            </button>
-            
-            <a 
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-4 text-center border border-gray-200 text-[10px] uppercase tracking-[0.3em] hover:border-gold transition-colors"
-            >
-              Inquire via WhatsApp
-            </a>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            {categories.map((category) => (
+              <Link
+                key={category.name}
+                href={`/shop?category=${category.name}`}
+                className="group"
+              >
+                <div className="bg-gray-100 rounded-lg p-6 text-center hover:bg-gold transition-all duration-300 transform hover:scale-105 cursor-pointer border-2 border-transparent hover:border-gold">
+                  <div className="text-4xl mb-3">{category.icon}</div>
+                  <p className="font-semibold text-luxuryBlack group-hover:text-white transition-colors">
+                    {category.name}
+                  </p>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Featured Products */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-serif font-bold text-center text-luxuryBlack mb-4">
+            Featured Collection
+          </h2>
+          <div className="w-24 h-1 bg-gold mx-auto mb-12"></div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featuredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                name={product.name}
+                price={product.price}
+                image={product.image}
+                category={product.category}
+                stock={product.stock}
+              />
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              href="/shop"
+              className="inline-block border-2 border-gold text-gold font-bold py-3 px-12 rounded-lg hover:bg-gold hover:text-luxuryBlack transition-all duration-300 text-lg tracking-widest"
+            >
+              VIEW ALL PRODUCTS
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-luxuryBlack text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h3 className="text-3xl font-serif font-bold mb-4">
+            Discover Your Style
+          </h3>
+          <p className="text-lg text-gray-300 mb-8">
+            Every piece in our collection is carefully curated to bring elegance and sophistication to your wardrobe. Experience luxury like never before.
+          </p>
+          <Link
+            href="/contact"
+            className="inline-block bg-gold text-luxuryBlack font-bold py-3 px-10 rounded-lg hover:bg-gold-dark transition-all duration-300 transform hover:scale-105 tracking-widest"
+          >
+            GET IN TOUCH
+          </Link>
+        </div>
+      </section>
     </main>
-  );
+  )
 }
