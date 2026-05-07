@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 export default function ContactPage() {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '231880123456'
+  const whatsappNumber = '231555109860'
 
   return (
     <main className="min-h-screen bg-white">
@@ -62,7 +62,7 @@ export default function ContactPage() {
                 </p>
                 <div className="flex gap-4">
                   <a
-                    href="https://facebook.com"
+                    href="https://www.facebook.com/profile.php?id=61589046006141"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-gold rounded-full flex items-center justify-center hover:bg-gold-dark transition-colors transform hover:scale-110"
@@ -76,7 +76,7 @@ export default function ContactPage() {
                     </svg>
                   </a>
                   <a
-                    href="https://tiktok.com"
+                    href="https://www.tiktok.com/@suraakareem"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-gold rounded-full flex items-center justify-center hover:bg-gold-dark transition-colors transform hover:scale-110"
@@ -90,7 +90,7 @@ export default function ContactPage() {
                     </svg>
                   </a>
                   <a
-                    href="https://instagram.com"
+                    href="https://www.instagram.com/beyeatukareem"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-12 h-12 bg-gold rounded-full flex items-center justify-center hover:bg-gold-dark transition-colors transform hover:scale-110"

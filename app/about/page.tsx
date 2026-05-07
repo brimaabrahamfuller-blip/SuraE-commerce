@@ -1,18 +1,64 @@
 import Link from 'next/link'
 
 export default function AboutPage() {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '231880123456'
+  const whatsappNumber = '231555109860'
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-luxuryBlack text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl font-serif font-bold mb-6">
+      {/* Hero Section with Luxury Background */}
+      <section 
+        className="relative py-40 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center justify-center overflow-hidden"
+        style={{
+          backgroundImage: 'url(/about-hero.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/55"></div>
+
+        {/* Gold Shimmer Animation Layer */}
+        <style>{`
+          @keyframes goldShimmer {
+            0% {
+              background-position: -1000px 0;
+              opacity: 0;
+            }
+            50% {
+              opacity: 0.3;
+            }
+            100% {
+              background-position: 1000px 0;
+              opacity: 0;
+            }
+          }
+          
+          .shimmer-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+              90deg,
+              transparent 0%,
+              rgba(212, 160, 23, 0.4) 20%,
+              rgba(229, 192, 91, 0.6) 50%,
+              rgba(212, 160, 23, 0.4) 80%,
+              transparent 100%
+            );
+            background-size: 1000px 100%;
+            animation: goldShimmer 8s infinite;
+            pointer-events: none;
+          }
+        `}</style>
+        <div className="shimmer-overlay"></div>
+
+        {/* Content */}
+        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 drop-shadow-lg">
             About Sura
           </h1>
-          <p className="text-xl text-gold italic mb-4">
-            "Style that speaks for you."
+          <p className="text-xl sm:text-2xl lg:text-3xl text-gold italic drop-shadow-lg">
+            Style that speaks for you.
           </p>
         </div>
       </section>
@@ -114,7 +160,7 @@ export default function AboutPage() {
           <div className="flex justify-center gap-8 mb-12">
             {/* Facebook */}
             <a
-              href="https://facebook.com"
+              href="https://www.facebook.com/profile.php?id=61589046006141"
               target="_blank"
               rel="noopener noreferrer"
               className="w-16 h-16 bg-gold rounded-full flex items-center justify-center hover:bg-gold-dark transition-colors transform hover:scale-110"
@@ -130,7 +176,7 @@ export default function AboutPage() {
 
             {/* TikTok */}
             <a
-              href="https://tiktok.com"
+              href="https://www.tiktok.com/@suraakareem"
               target="_blank"
               rel="noopener noreferrer"
               className="w-16 h-16 bg-gold rounded-full flex items-center justify-center hover:bg-gold-dark transition-colors transform hover:scale-110"
@@ -146,7 +192,7 @@ export default function AboutPage() {
 
             {/* Instagram */}
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/beyeatukareem"
               target="_blank"
               rel="noopener noreferrer"
               className="w-16 h-16 bg-gold rounded-full flex items-center justify-center hover:bg-gold-dark transition-colors transform hover:scale-110"

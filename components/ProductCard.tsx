@@ -17,9 +17,9 @@ export default function ProductCard({
   category,
   stock,
 }: ProductCardProps) {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '231880123456'
+  const whatsappNumber = '231555109860'
   const message = encodeURIComponent(
-    `Hi Sura, I want to order ${name} at ${price}`
+    `Hi Sura, I want to order ${name} at $${price}`
   )
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`
 

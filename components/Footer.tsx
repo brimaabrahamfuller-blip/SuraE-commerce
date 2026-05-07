@@ -3,7 +3,8 @@
 import Link from 'next/link'
 
 export default function Footer() {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '231880123456'
+  const whatsappNumber = '231555109860'
+  const nextgentsNumber = '250791389824'
 
   return (
     <footer className="bg-luxuryBlack text-white mt-16">
@@ -50,7 +51,7 @@ export default function Footer() {
             </h4>
             <div className="flex space-x-6">
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/profile.php?id=61589046006141"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-gold transition-colors duration-300"
@@ -65,7 +66,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://tiktok.com"
+                href="https://www.tiktok.com/@suraakareem"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-gold transition-colors duration-300"
@@ -80,7 +81,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/beyeatukareem"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-gold transition-colors duration-300"
@@ -132,6 +133,21 @@ export default function Footer() {
               Shop
             </Link>
           </div>
+        </div>
+
+        {/* NextGents Branding */}
+        <div className="text-center mt-8 pt-8 border-t border-gray-700">
+          <p className="text-gray-500 text-sm">
+            Built by{' '}
+            <a
+              href={`https://wa.me/${nextgentsNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gold hover:text-gold-light transition-colors font-semibold"
+            >
+              #NextGents
+            </a>
+          </p>
         </div>
       </div>
     </footer>
