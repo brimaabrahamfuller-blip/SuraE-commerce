@@ -1,139 +1,237 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+
+interface Category {
+  id: string
+  name: string
+}
 
 interface Product {
   id: string
   name: string
-  price: string
-  category: string
-  stock: number
+  description: string
+  price: number
+  categoryId: string
+  images: string[]
+  createdAt: string
 }
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'Elegant Gold Clutch',
-      price: '89.99',
-      category: 'Bags',
-      stock: 15,
-    },
-    {
-      id: '2',
-      name: 'Silk Evening Dress',
-      price: '249.99',
-      category: 'Dresses',
-      stock: 8,
-    },
-    {
-      id: '3',
-      name: 'Premium Blouse',
-      price: '129.99',
-      category: 'Blouses',
-      stock: 3,
-    },
-  ])
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<Product | null>(null)
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [newProduct, setNewProduct] = useState<Omit<Product, 'id'>>({
+  const [passwordError, setPasswordError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [productsLoading, setProductsLoading] = useState(true)
+
+  const [formData, setFormData] = useState({
     name: '',
+    description: '',
     price: '',
-    category: '',
-    stock: 0,
+    categoryId: '',
+    images: '',
   })
+  const [editingId, setEditingId] = useState<string | null>(null)
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Handle login
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123'
-    if (password === adminPassword) {
-      setIsAuthenticated(true)
-      setPassword('')
-    } else {
-      alert('Incorrect password')
-      setPassword('')
-    }
-  }
+    setIsLoading(true)
+    setPasswordError('')
 
-  const handleEdit = (product: Product) => {
-    setEditingId(product.id)
-    setEditForm({ ...product })
-  }
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
 
-  const handleSaveEdit = () => {
-    if (editForm) {
-      setProducts(
-        products.map((p) => (p.id === editingId ? editForm : p))
-      )
-      setEditingId(null)
-      setEditForm(null)
-    }
-  }
+      const data = await response.json()
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter((p) => p.id !== id))
-    }
-  }
-
-  const handleAddProduct = () => {
-    if (
-      newProduct.name &&
-      newProduct.price &&
-      newProduct.category &&
-      newProduct.stock >= 0
-    ) {
-      const product: Product = {
-        id: Date.now().toString(),
-        ...newProduct,
+      if (data.success) {
+        setIsAuthenticated(true)
+        setPassword('')
+        fetchProducts()
+        fetchCategories()
+      } else {
+        setPasswordError('Incorrect password')
       }
-      setProducts([...products, product])
-      setNewProduct({ name: '', price: '', category: '', stock: 0 })
-      setShowAddForm(false)
-    } else {
-      alert('Please fill in all fields')
+    } catch (error) {
+      setPasswordError('Login failed. Please try again.')
+      console.error('Login error:', error)
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  // Fetch products
+  const fetchProducts = async () => {
+    setProductsLoading(true)
+    try {
+      const response = await fetch('/api/products')
+      const data = await response.json()
+      setProducts(data)
+    } catch (error) {
+      console.error('Error fetching products:', error)
+    } finally {
+      setProductsLoading(false)
+    }
+  }
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      const data = await response.json()
+      setCategories(data)
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+    }
+  }
+
+  // Add or update product
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!formData.name || !formData.description || !formData.price || !formData.categoryId) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    try {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        categoryId: formData.categoryId,
+        images: formData.images ? [formData.images] : [],
+      }
+
+      let response
+      if (editingId) {
+        response = await fetch('/api/products', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingId, ...payload }),
+        })
+      } else {
+        response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      }
+
+      if (response.ok) {
+        setFormData({
+          name: '',
+          description: '',
+          price: '',
+          categoryId: '',
+          images: '',
+        })
+        setEditingId(null)
+        fetchProducts()
+      }
+    } catch (error) {
+      console.error('Error saving product:', error)
+      alert('Failed to save product')
+    }
+  }
+
+  // Delete product
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return
+
+    try {
+      const response = await fetch(`/api/products?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        fetchProducts()
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      alert('Failed to delete product')
+    }
+  }
+
+  // Edit product
+  const handleEditProduct = (product: Product) => {
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price: product.price.toString(),
+      categoryId: product.categoryId,
+      images: product.images[0] || '',
+    })
+    setEditingId(product.id)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Cancel edit
+  const handleCancelEdit = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      categoryId: '',
+      images: '',
+    })
+    setEditingId(null)
   }
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
-        <div className="max-w-md w-full bg-gray-50 p-8 rounded-lg shadow-lg">
-          <h1 className="text-3xl font-serif font-bold text-luxuryBlack text-center mb-2">
-            Admin Panel
+      <main className="min-h-screen bg-luxuryBlack flex items-center justify-center px-4">
+        <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+          <h1 className="text-3xl font-serif font-bold text-luxuryBlack mb-2 text-center">
+            Sura Admin
           </h1>
-          <p className="text-center text-gray-600 mb-8">
-            Enter your password to continue
+          <p className="text-gray-600 text-center mb-8">
+            Enter your password to access the dashboard
           </p>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-luxuryBlack mb-2">
-                Password
+                Admin Password
               </label>
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  setPasswordError('')
+                }}
+                placeholder="Enter password"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold focus:ring-opacity-20"
               />
+              {passwordError && (
+                <p className="text-red-600 text-sm mt-2">{passwordError}</p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="w-full bg-gold text-luxuryBlack font-bold py-3 px-6 rounded-lg hover:bg-gold-dark transition-all duration-300 tracking-widest"
+              disabled={isLoading}
+              className="w-full bg-gold text-luxuryBlack font-bold py-3 rounded-lg hover:bg-gold-dark transition-colors disabled:opacity-50"
             >
-              LOGIN
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
-          <p className="text-xs text-gray-500 text-center mt-6">
-            This page is password protected.
-          </p>
+          <Link
+            href="/"
+            className="block text-center text-gray-600 hover:text-gold mt-6 text-sm"
+          >
+            Back to Home
+          </Link>
         </div>
       </main>
     )
@@ -141,263 +239,206 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-serif font-bold text-luxuryBlack">
-              Admin Panel
+              Admin Dashboard
             </h1>
-            <p className="text-gray-600 mt-2">Manage your products</p>
+            <p className="text-gray-600 mt-2">Manage products and inventory</p>
           </div>
           <button
-            onClick={() => setIsAuthenticated(false)}
-            className="bg-luxuryBlack text-white font-semibold py-2 px-6 rounded-lg hover:bg-gray-800 transition-colors"
+            onClick={() => {
+              setIsAuthenticated(false)
+              setPassword('')
+            }}
+            className="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-700 transition-colors"
           >
             Logout
           </button>
         </div>
 
-        {/* Add Product Button */}
-        <div className="mb-8">
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="bg-gold text-luxuryBlack font-bold py-3 px-8 rounded-lg hover:bg-gold-dark transition-all duration-300 transform hover:scale-105"
-          >
-            {showAddForm ? 'Cancel' : '+ Add New Product'}
-          </button>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Add/Edit Product Form */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-6">
+              <h2 className="text-2xl font-serif font-bold text-luxuryBlack mb-6">
+                {editingId ? 'Edit Product' : 'Add Product'}
+              </h2>
 
-        {/* Add Product Form */}
-        {showAddForm && (
-          <div className="bg-white p-8 rounded-lg shadow-lg mb-8">
-            <h2 className="text-2xl font-serif font-bold text-luxuryBlack mb-6">
-              Add New Product
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-luxuryBlack mb-2">
-                  Product Name
-                </label>
-                <input
-                  type="text"
-                  value={newProduct.name}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, name: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-luxuryBlack mb-2">
-                  Price
-                </label>
-                <input
-                  type="text"
-                  value={newProduct.price}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, price: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-luxuryBlack mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={newProduct.category}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, category: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-luxuryBlack mb-2">
-                  Stock
-                </label>
-                <input
-                  type="number"
-                  value={newProduct.stock}
-                  onChange={(e) =>
-                    setNewProduct({
-                      ...newProduct,
-                      stock: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold"
-                />
-              </div>
-            </div>
-            <button
-              onClick={handleAddProduct}
-              className="mt-6 bg-gold text-luxuryBlack font-bold py-2 px-8 rounded-lg hover:bg-gold-dark transition-colors"
-            >
-              Add Product
-            </button>
-          </div>
-        )}
+              <form onSubmit={handleSaveProduct} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-luxuryBlack mb-2">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    placeholder="e.g., Luxury Handbag"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold"
+                  />
+                </div>
 
-        {/* Products Table */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-luxuryBlack text-white">
-                <th className="px-6 py-4 text-left font-semibold">Name</th>
-                <th className="px-6 py-4 text-left font-semibold">Price</th>
-                <th className="px-6 py-4 text-left font-semibold">Category</th>
-                <th className="px-6 py-4 text-left font-semibold">Stock</th>
-                <th className="px-6 py-4 text-left font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr
-                  key={product.id}
-                  className="border-b border-gray-200 hover:bg-gray-50"
-                >
-                  {editingId === product.id && editForm ? (
-                    <>
-                      <td className="px-6 py-4">
-                        <input
-                          type="text"
-                          value={editForm.name}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, name: e.target.value })
-                          }
-                          className="w-full px-2 py-1 border border-gray-300 rounded"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <input
-                          type="text"
-                          value={editForm.price}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, price: e.target.value })
-                          }
-                          className="w-full px-2 py-1 border border-gray-300 rounded"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <input
-                          type="text"
-                          value={editForm.category}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              category: e.target.value,
-                            })
-                          }
-                          className="w-full px-2 py-1 border border-gray-300 rounded"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <input
-                          type="number"
-                          value={editForm.stock}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              stock: parseInt(e.target.value) || 0,
-                            })
-                          }
-                          className="w-full px-2 py-1 border border-gray-300 rounded"
-                        />
-                      </td>
-                      <td className="px-6 py-4 space-x-2">
-                        <button
-                          onClick={handleSaveEdit}
-                          className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition-colors"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="bg-gray-400 text-white px-4 py-1 rounded hover:bg-gray-500 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-6 py-4 font-semibold text-luxuryBlack">
-                        {product.name}
-                      </td>
-                      <td className="px-6 py-4 text-gold font-semibold">
-                        ${product.price}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700">
-                        {product.category}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            product.stock > 5
-                              ? 'bg-green-100 text-green-800'
-                              : product.stock > 0
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {product.stock}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 space-x-2">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </>
+                <div>
+                  <label className="block text-sm font-semibold text-luxuryBlack mb-2">
+                    Description *
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    placeholder="Product details"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-luxuryBlack mb-2">
+                    Price ($) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-luxuryBlack mb-2">
+                    Category *
+                  </label>
+                  <select
+                    value={formData.categoryId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, categoryId: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-luxuryBlack mb-2">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.images}
+                    onChange={(e) =>
+                      setFormData({ ...formData, images: e.target.value })
+                    }
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-gold text-luxuryBlack font-bold py-2 rounded-lg hover:bg-gold-dark transition-colors"
+                  >
+                    {editingId ? 'Update' : 'Add'} Product
+                  </button>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="flex-1 bg-gray-300 text-luxuryBlack font-bold py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                    >
+                      Cancel
+                    </button>
                   )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {products.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No products yet</p>
+                </div>
+              </form>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-gray-600 text-sm font-semibold mb-2">
-              Total Products
-            </p>
-            <p className="text-4xl font-serif font-bold text-gold">
-              {products.length}
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-gray-600 text-sm font-semibold mb-2">
-              Total Stock
-            </p>
-            <p className="text-4xl font-serif font-bold text-gold">
-              {products.reduce((sum, p) => sum + p.stock, 0)}
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-gray-600 text-sm font-semibold mb-2">
-              Low Stock Items
-            </p>
-            <p className="text-4xl font-serif font-bold text-gold">
-              {products.filter((p) => p.stock <= 5).length}
-            </p>
+          {/* Products List */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-serif font-bold text-luxuryBlack mb-6">
+                Products ({products.length})
+              </h2>
+
+              {productsLoading ? (
+                <p className="text-gray-600">Loading products...</p>
+              ) : products.length === 0 ? (
+                <p className="text-gray-600 text-center py-8">
+                  No products yet. Add your first product using the form on the left.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-semibold text-luxuryBlack">
+                          Name
+                        </th>
+                        <th className="text-left py-3 px-4 font-semibold text-luxuryBlack">
+                          Category
+                        </th>
+                        <th className="text-left py-3 px-4 font-semibold text-luxuryBlack">
+                          Price
+                        </th>
+                        <th className="text-center py-3 px-4 font-semibold text-luxuryBlack">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((product) => (
+                        <tr
+                          key={product.id}
+                          className="border-b border-gray-100 hover:bg-gray-50"
+                        >
+                          <td className="py-3 px-4 text-sm text-luxuryBlack">
+                            {product.name}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {categories.find((c) => c.id === product.categoryId)
+                              ?.name || 'Unknown'}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-semibold text-gold">
+                            ${product.price.toFixed(2)}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              onClick={() => handleEditProduct(product)}
+                              className="text-blue-600 hover:text-blue-800 font-semibold mr-4"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="text-red-600 hover:text-red-800 font-semibold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

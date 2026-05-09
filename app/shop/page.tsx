@@ -1,94 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ProductCard from '@/components/ProductCard'
 
-const allProducts = [
-  {
-    id: 1,
-    name: 'Elegant Gold Clutch',
-    price: '89.99',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&h=500&fit=crop',
-    category: 'Bags',
-    stock: 'In Stock' as const,
-    size: 'One Size',
-  },
-  {
-    id: 2,
-    name: 'Silk Evening Dress',
-    price: '249.99',
-    image: 'https://images.unsplash.com/photo-1595777707802-41d339d60280?w=500&h=500&fit=crop',
-    category: 'Dresses',
-    stock: 'In Stock' as const,
-    size: 'XS-XL',
-  },
-  {
-    id: 3,
-    name: 'Premium Blouse',
-    price: '129.99',
-    image: 'https://images.unsplash.com/photo-1551028719-00167b16ebc5?w=500&h=500&fit=crop',
-    category: 'Blouses',
-    stock: 'Low Stock' as const,
-    size: 'XS-XL',
-  },
-  {
-    id: 4,
-    name: 'Luxury Perfume',
-    price: '159.99',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=500&fit=crop',
-    category: 'Perfume',
-    stock: 'In Stock' as const,
-    size: 'One Size',
-  },
-  {
-    id: 5,
-    name: 'Designer Jeans',
-    price: '119.99',
-    image: 'https://images.unsplash.com/photo-1542272604-787c62d465d1?w=500&h=500&fit=crop',
-    category: 'Jeans',
-    stock: 'In Stock' as const,
-    size: '24-36',
-  },
-  {
-    id: 6,
-    name: 'Luxury T-Shirt',
-    price: '79.99',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop',
-    category: 'T-Shirts',
-    stock: 'In Stock' as const,
-    size: 'XS-XL',
-  },
-  {
-    id: 7,
-    name: 'Silk Shirt',
-    price: '139.99',
-    image: 'https://images.unsplash.com/photo-1596399579883-e5fe58d28567?w=500&h=500&fit=crop',
-    category: 'Shirts',
-    stock: 'In Stock' as const,
-    size: 'XS-XL',
-  },
-  {
-    id: 8,
-    name: 'Luxury Handbag',
-    price: '199.99',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&h=500&fit=crop',
-    category: 'Bags',
-    stock: 'Out of Stock' as const,
-    size: 'One Size',
-  },
-]
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  categoryId: string
+  images: string[]
+  category: {
+    id: string
+    name: string
+  }
+}
 
-const categories = ['All', 'Bags', 'Dresses', 'Blouses', 'Shirts', 'Jeans', 'T-Shirts', 'Perfume']
+const categories = ['All', 'Bags', 'Dresses', 'Blouses', 'Tops', 'T-Shirts', 'Jeans', 'Shirts', 'Perfume']
 const sizes = ['All', 'XS', 'S', 'M', 'L', 'XL', 'One Size']
 
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedSize, setSelectedSize] = useState('All')
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredProducts = allProducts.filter((product) => {
-    const categoryMatch = selectedCategory === 'All' || product.category === selectedCategory
-    const sizeMatch = selectedSize === 'All' || product.size.includes(selectedSize)
-    return categoryMatch && sizeMatch
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products')
+        const data = await response.json()
+        setProducts(data)
+      } catch (error) {
+        console.error('Error fetching products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  const filteredProducts = products.filter((product) => {
+    const categoryMatch = selectedCategory === 'All' || product.category.name === selectedCategory
+    return categoryMatch
   })
 
   return (
@@ -174,29 +129,39 @@ export default function ShopPage() {
           <div className="flex-1">
             {/* Results Count */}
             <div className="mb-6 text-gray-600">
-              Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+              {loading ? (
+                'Loading...'
+              ) : (
+                <>
+                  Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+                </>
+              )}
             </div>
 
-            {filteredProducts.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-16">
+                <p className="text-gray-600">Loading collection...</p>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredProducts.map((product) => (
                   <ProductCard
                     key={product.id}
                     name={product.name}
-                    price={product.price}
-                    image={product.image}
-                    category={product.category}
-                    stock={product.stock}
+                    price={product.price.toString()}
+                    image={product.images[0] || 'https://via.placeholder.com/500'}
+                    category={product.category.name}
+                    stock="In Stock"
                   />
                 ))}
               </div>
             ) : (
               <div className="text-center py-16">
                 <p className="text-2xl font-serif text-gray-400 mb-4">
-                  No products found
+                  New arrivals coming soon
                 </p>
                 <p className="text-gray-600 mb-8">
-                  Try adjusting your filters to find what you're looking for.
+                  Check back soon for our latest luxury collection.
                 </p>
                 <button
                   onClick={() => {

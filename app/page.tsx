@@ -1,40 +1,18 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
 
-const featuredProducts = [
-  {
-    id: 1,
-    name: 'Elegant Gold Clutch',
-    price: '89.99',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&h=500&fit=crop',
-    category: 'Bags',
-    stock: 'In Stock' as const,
-  },
-  {
-    id: 2,
-    name: 'Silk Evening Dress',
-    price: '249.99',
-    image: 'https://images.unsplash.com/photo-1595777707802-41d339d60280?w=500&h=500&fit=crop',
-    category: 'Dresses',
-    stock: 'In Stock' as const,
-  },
-  {
-    id: 3,
-    name: 'Premium Blouse',
-    price: '129.99',
-    image: 'https://images.unsplash.com/photo-1551028719-00167b16ebc5?w=500&h=500&fit=crop',
-    category: 'Blouses',
-    stock: 'Low Stock' as const,
-  },
-  {
-    id: 4,
-    name: 'Luxury Perfume',
-    price: '159.99',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=500&fit=crop',
-    category: 'Perfume',
-    stock: 'In Stock' as const,
-  },
-]
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  categoryId: string
+  images: string[]
+  stock?: 'In Stock' | 'Low Stock' | 'Out of Stock'
+}
 
 const categories = [
   { name: 'Bags', icon: '👜' },
@@ -47,8 +25,133 @@ const categories = [
 ]
 
 export default function Home() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showSplash, setShowSplash] = useState(true)
+
+  useEffect(() => {
+    // Check if splash was already shown in this session
+    const splashShown = sessionStorage.getItem('splashShown')
+    if (splashShown) {
+      setShowSplash(false)
+    }
+
+    // Fetch products from database
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products')
+        const data = await response.json()
+        setProducts(data)
+      } catch (error) {
+        console.error('Error fetching products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  const handleSplashEnd = () => {
+    setShowSplash(false)
+    sessionStorage.setItem('splashShown', 'true')
+  }
+
   return (
     <main className="min-h-screen bg-white">
+      {/* Welcome Splash Screen */}
+      {showSplash && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <style>{`
+            @keyframes splashFadeIn {
+              0% {
+                opacity: 0;
+              }
+              100% {
+                opacity: 1;
+              }
+            }
+
+            @keyframes logoGlow {
+              0% {
+                opacity: 0;
+                transform: scale(0.8);
+                filter: drop-shadow(0 0 0 rgba(212, 160, 23, 0));
+              }
+              50% {
+                opacity: 1;
+                transform: scale(1);
+                filter: drop-shadow(0 0 30px rgba(212, 160, 23, 0.8));
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: drop-shadow(0 0 20px rgba(212, 160, 23, 0.6));
+              }
+            }
+
+            @keyframes textFadeIn {
+              0% {
+                opacity: 0;
+              }
+              100% {
+                opacity: 1;
+              }
+            }
+
+            @keyframes splashFadeOut {
+              0% {
+                opacity: 1;
+              }
+              100% {
+                opacity: 0;
+              }
+            }
+
+            .splash-bg {
+              animation: splashFadeIn 0.5s ease-in;
+              background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            }
+
+            .splash-logo {
+              animation: logoGlow 1s ease-out 0.5s both;
+            }
+
+            .splash-title {
+              animation: textFadeIn 0.8s ease-out 1.5s both;
+            }
+
+            .splash-subtitle {
+              animation: textFadeIn 0.8s ease-out 2s both;
+            }
+
+            .splash-exit {
+              animation: splashFadeOut 0.8s ease-out 3s forwards;
+            }
+          `}</style>
+          <div className="splash-bg splash-exit fixed inset-0 flex items-center justify-center flex-col gap-8">
+            <div className="splash-logo text-center">
+              <h1 className="text-7xl font-serif font-bold text-gold drop-shadow-lg">
+                Sura
+              </h1>
+            </div>
+            <h2 className="splash-title text-3xl font-serif text-white text-center px-4">
+              Welcome to Sura Luxury Collection
+            </h2>
+            <p className="splash-subtitle text-xl text-gold italic text-center px-4">
+              Style that speaks for you.
+            </p>
+          </div>
+          <div
+            className="fixed inset-0"
+            onAnimationEnd={handleSplashEnd}
+            style={{
+              animation: 'splashFadeOut 0.8s ease-out 3s forwards',
+            }}
+          ></div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background Gradient */}
@@ -113,27 +216,44 @@ export default function Home() {
           </h2>
           <div className="w-24 h-1 bg-gold mx-auto mb-12"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                name={product.name}
-                price={product.price}
-                image={product.image}
-                category={product.category}
-                stock={product.stock}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Loading collection...</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-gray-600 text-lg mb-4">
+                New arrivals coming soon
+              </p>
+              <p className="text-gray-500">
+                Check back soon for our latest luxury collection
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {products.slice(0, 4).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    name={product.name}
+                    price={product.price.toString()}
+                    image={product.images[0] || 'https://via.placeholder.com/500'}
+                    category={product.categoryId}
+                    stock="In Stock"
+                  />
+                ))}
+              </div>
 
-          <div className="text-center mt-12">
-            <Link
-              href="/shop"
-              className="inline-block border-2 border-gold text-gold font-bold py-3 px-12 rounded-lg hover:bg-gold hover:text-luxuryBlack transition-all duration-300 text-lg tracking-widest"
-            >
-              VIEW ALL PRODUCTS
-            </Link>
-          </div>
+              <div className="text-center mt-12">
+                <Link
+                  href="/shop"
+                  className="inline-block border-2 border-gold text-gold font-bold py-3 px-12 rounded-lg hover:bg-gold hover:text-luxuryBlack transition-all duration-300 text-lg tracking-widest"
+                >
+                  VIEW ALL PRODUCTS
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
