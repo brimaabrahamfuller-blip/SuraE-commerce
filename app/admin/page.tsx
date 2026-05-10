@@ -171,7 +171,9 @@ export default function AdminPage() {
       images: product.images[0] || '',
     })
     setEditingId(product.id)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   // Cancel edit
