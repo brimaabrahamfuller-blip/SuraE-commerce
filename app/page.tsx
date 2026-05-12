@@ -31,9 +31,11 @@ export default function Home() {
 
   useEffect(() => {
     // Check if splash was already shown in this session
-    const splashShown = sessionStorage.getItem('splashShown')
-    if (splashShown) {
-      setShowSplash(false)
+    if (typeof window !== 'undefined') {
+      const splashShown = sessionStorage.getItem('splashShown')
+      if (splashShown) {
+        setShowSplash(false)
+      }
     }
 
     // Fetch products from database
@@ -54,7 +56,9 @@ export default function Home() {
 
   const handleSplashEnd = () => {
     setShowSplash(false)
-    sessionStorage.setItem('splashShown', 'true')
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('splashShown', 'true')
+    }
   }
 
   return (
