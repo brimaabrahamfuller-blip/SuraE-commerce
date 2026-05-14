@@ -6,44 +6,42 @@ import ProductCard from '@/components/ProductCard'
 interface Product {
   id: string
   name: string
-  description: string
   price: number
-  categoryId: string
   images: string[]
-  category: {
-    id: string
-    name: string
-  }
+  category: { id: string; name: string }
 }
 
-const categories = ['All', 'Bags', 'Dresses', 'Blouses', 'Tops', 'T-Shirts', 'Jeans', 'Shirts', 'Perfume']
-const sizes = ['All', 'XS', 'S', 'M', 'L', 'XL', 'One Size']
+
+
+const activeCategories = ['Bags', 'Dresses', 'Blouses', 'Tops', 'T-Shirts', 'Jeans', 'Shirts', 'Perfume']
+const comingSoonCategories = ['Jewelry', 'Accessories', 'Shoes', 'Sunglasses', 'Watches', 'Swimwear', 'Lingerie']
+const allCategories = ['All', ...activeCategories, ...comingSoonCategories]
 
 export default function ShopPage() {
-  const [selectedCategory, setSelectedCategory] = useState('All')
-  const [selectedSize, setSelectedSize] = useState('All')
   const [products, setProducts] = useState<Product[]>([])
+  const [selectedCategory, setSelectedCategory] = useState('All')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/products')
-        const data = await response.json()
-        setProducts(data)
+        const productsRes = await fetch('/api/products')
+        const productsData = await productsRes.json()
+        setProducts(Array.isArray(productsData) ? productsData : [])
       } catch (error) {
-        console.error('Error fetching products:', error)
+        console.error('Error fetching data:', error)
+        setProducts([])
       } finally {
         setLoading(false)
       }
     }
 
-    fetchProducts()
+    fetchData()
   }, [])
 
   const filteredProducts = products.filter((product) => {
-    const categoryMatch = selectedCategory === 'All' || product.category.name === selectedCategory
-    return categoryMatch
+    if (selectedCategory === 'All') return true
+    return product.category?.name === selectedCategory
   })
 
   return (
@@ -51,13 +49,9 @@ export default function ShopPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-5xl font-serif font-bold text-luxuryBlack mb-4">
-            Shop Our Collection
-          </h1>
+          <h1 className="text-5xl font-serif font-bold text-luxuryBlack mb-4">Shop Our Collection</h1>
           <div className="w-24 h-1 bg-gold mb-4"></div>
-          <p className="text-gray-600 text-lg">
-            Discover our curated selection of luxury fashion pieces.
-          </p>
+          <p className="text-gray-600 text-lg">Discover our curated selection of luxury fashion pieces.</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -66,58 +60,38 @@ export default function ShopPage() {
             <div className="sticky top-24">
               {/* Category Filter */}
               <div className="mb-8 border-b border-gray-200 pb-8">
-                <h3 className="text-lg font-serif font-bold text-luxuryBlack mb-4">
-                  Category
-                </h3>
+                <h3 className="text-lg font-serif font-bold text-luxuryBlack mb-4">Category</h3>
                 <div className="space-y-3">
-                  {categories.map((category) => (
-                    <label key={category} className="flex items-center cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="category"
-                        value={category}
-                        checked={selectedCategory === category}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-4 h-4 text-gold cursor-pointer"
-                      />
-                      <span className="ml-3 text-gray-700 group-hover:text-gold transition-colors">
-                        {category}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Size Filter */}
-              <div className="mb-8">
-                <h3 className="text-lg font-serif font-bold text-luxuryBlack mb-4">
-                  Size
-                </h3>
-                <div className="space-y-3">
-                  {sizes.map((size) => (
-                    <label key={size} className="flex items-center cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="size"
-                        value={size}
-                        checked={selectedSize === size}
-                        onChange={(e) => setSelectedSize(e.target.value)}
-                        className="w-4 h-4 text-gold cursor-pointer"
-                      />
-                      <span className="ml-3 text-gray-700 group-hover:text-gold transition-colors">
-                        {size}
-                      </span>
-                    </label>
-                  ))}
+                  {allCategories.map((category) => {
+                    const isComingSoon = comingSoonCategories.includes(category)
+                    return (
+                      <label key={category} className={`flex items-center group ${isComingSoon ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+                        <input
+                          type="radio"
+                          name="category"
+                          value={category}
+                          checked={selectedCategory === category}
+                          onChange={(e) => !isComingSoon && setSelectedCategory(e.target.value)}
+                          disabled={isComingSoon}
+                          className={`w-4 h-4 text-gold ${isComingSoon ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        />
+                        <span className={`ml-3 text-gray-700 flex items-center ${!isComingSoon ? 'group-hover:text-gold transition-colors' : ''}`}>
+                          {category}
+                          {isComingSoon && (
+                            <span className="ml-2 text-[10px] bg-gold text-luxuryBlack px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">
+                              Soon
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
 
               {/* Clear Filters */}
               <button
-                onClick={() => {
-                  setSelectedCategory('All')
-                  setSelectedSize('All')
-                }}
+                onClick={() => setSelectedCategory('All')}
                 className="w-full bg-gold text-luxuryBlack font-semibold py-2 px-4 rounded-lg hover:bg-gold-dark transition-colors"
               >
                 Clear Filters
@@ -127,20 +101,9 @@ export default function ShopPage() {
 
           {/* Products Grid */}
           <div className="flex-1">
-            {/* Results Count */}
-            <div className="mb-6 text-gray-600">
-              {loading ? (
-                'Loading...'
-              ) : (
-                <>
-                  Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
-                </>
-              )}
-            </div>
-
             {loading ? (
-              <div className="text-center py-16">
-                <p className="text-gray-600">Loading collection...</p>
+              <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold"></div>
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -150,27 +113,19 @@ export default function ShopPage() {
                     name={product.name}
                     price={product.price.toString()}
                     image={product.images[0] || 'https://via.placeholder.com/500'}
-                    category={product.category.name}
+                    category={product.category?.name || 'Uncategorized'}
                     stock="In Stock"
                   />
                 ))}
               </div>
             ) : (
               <div className="text-center py-16">
-                <p className="text-2xl font-serif text-gray-400 mb-4">
-                  New arrivals coming soon
-                </p>
-                <p className="text-gray-600 mb-8">
-                  Check back soon for our latest luxury collection.
-                </p>
+                <p className="text-2xl font-serif text-gray-400 mb-4">No products found</p>
                 <button
-                  onClick={() => {
-                    setSelectedCategory('All')
-                    setSelectedSize('All')
-                  }}
+                  onClick={() => setSelectedCategory('All')}
                   className="inline-block bg-gold text-luxuryBlack font-semibold py-2 px-8 rounded-lg hover:bg-gold-dark transition-colors"
                 >
-                  Reset Filters
+                  View All Products
                 </button>
               </div>
             )}
